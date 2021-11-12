@@ -1,0 +1,60 @@
+
+
+```{r}
+rm(list=ls())
+
+library(lars)
+data(diabetes)
+attach(diabetes)
+```
+
+Standardise y
+```{r}
+y <- y - mean(y)
+n <- length(y)
+m <- NCOL(x)
+tol = 0.001 #tolerance for equals calculations
+
+min_pos <- function(x){
+  min(x[x>0])
+}
+```
+
+```{r}
+#initialize 
+mu_hat <- rep(0, n)
+beta <- array(0, dim=c(m,m))
+beta[1,] <- t(x) %*% mu_hat
+
+for (i in 2:m){
+  c <- t(x) %*% (y - mu_hat)
+  C_hat <- max(c)
+  A <- which(abs(abs(c) - C_hat) < tol)
+  A_c <- which(abs(abs(c) - C_hat) >= tol)
+  s <- sign(c[A])
+  x_A <- sweep(x[,A,drop=FALSE], MARGIN=2, s, '*')
+  G_A <- t(x_A) %*% x_A
+  one_A <- cbind(rep(1, length(A)))
+  A_A <- (t(one_A) %*% solve(G_A) %*% one_A)[1,1] ^ (-1/2)
+  w_A <- A_A * solve(G_A) %*% one_A  #is this the right G?
+  u_A <- x_A %*% w_A
+  a <- t(x) %*% u_A
+  
+  gamma_hat <- min_pos(c((C_hat - c[A_c]) / (A_A - a[A_c]) , (C_hat + c[A_c]) / (A_A + a[A_c])))
+  
+  mu_hat <- mu_hat + gamma_hat * u_A
+  beta[i,] <- solve(x[1:10,]) %*% mu_hat[1:10]
+}
+
+#please ignore the fact that I coloured each of these lines individually 
+plot(beta[,1], type='l', ylim=c(-500,500), ylab='beta')
+lines(beta[,2], type='l', col='blue')
+lines(beta[,3], type='l', col='red')
+lines(beta[,4], type='l', col='green')
+lines(beta[,5], type='l', col='yellow')
+lines(beta[,6], type='l', col='orange')
+lines(beta[,7], type='l', col='purple')
+lines(beta[,8], type='l', col='pink')
+lines(beta[,9], type='l', col='brown')
+lines(beta[,10], type='l', col='cyan')
+```
